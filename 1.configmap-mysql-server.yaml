@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-server-configmap
+  namespace: wordpress
+data:
+  mysqlserver: wordpress-mysql

@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization 
+secretGenerator:
+- name: app-secret
+  namespace: wordpress
+  literals:
+  - password=Nolimit123
+  - database=wordpress
+  - user=wordpress
+  - rootpassword=Nolimit123
+resources:
+#  - mysql-deployment.yaml
+#  - wordpress-deployment.yaml
+  - 1.configmap-mysql-server.yaml
+  - 2.mysql-resources.yaml
+  - 3.wordpress-resources.yaml
+  - 4.ingress-alb.yaml
+
+

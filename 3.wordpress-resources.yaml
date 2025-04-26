@@ -1,0 +1,86 @@
+apiVersion: v1
+kind: Service
+metadata:
+# Namespace is added
+  namespace: wordpress
+  annotations:
+#    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+#    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  ports:
+    - port: 80
+  selector:
+    app: wordpress
+    tier: frontend
+  type: ClusterIP
+ # If we use Ingress resource to create Alb, we should change service type from "LoadBalancer" to "ClusterIP"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  namespace: wordpress
+  name: wp-pv-claim
+  labels:
+    app: wordpress
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 20Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: wordpress
+  name: wordpress
+  labels:
+    app: wordpress
+spec:
+  selector:
+    matchLabels:
+      app: wordpress
+      tier: frontend
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      namespace: wordpress
+      labels:
+        app: wordpress
+        tier: frontend
+    spec:
+      containers:
+      - image: wordpress:6.2.1-apache
+        name: wordpress
+        env:
+        - name: WORDPRESS_DB_HOST
+          valueFrom:
+            configMapKeyRef:
+              name: mysql-server-configmap
+              key: mysqlserver
+#          value: wordpress-mysql
+        - name: WORDPRESS_DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: password
+        - name: WORDPRESS_DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: app-secret
+              key: user
+#          value: wordpress
+        ports:
+        - containerPort: 80
+          name: wordpress
+        volumeMounts:
+        - name: wordpress-persistent-storage
+          mountPath: /var/www/html
+      volumes:
+      - name: wordpress-persistent-storage
+        persistentVolumeClaim:
+          claimName: wp-pv-claim
